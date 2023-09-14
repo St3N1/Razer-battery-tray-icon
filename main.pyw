@@ -73,30 +73,33 @@ def get_battery():
 
 
 def update_icon():
-    global stop
+    global stop, time
     sleep(2)
     while not stop:
         time = 300
-        battery = float(get_battery())
-        if battery > 75:
-            img = Image.open(
-                f"{BASE_DIR}/images/battery_100.png")
-        elif battery > 50:
-            img = Image.open(
-                f"{BASE_DIR}/images/battery_75.png")
-        elif battery > 25:
-            img = Image.open(
-                f"{BASE_DIR}/images/battery_50.png")
-        elif battery > 0:
-            img = Image.open(
-                f"{BASE_DIR}/images/battery_25.png")
-        else:
-            img = Image.open(
-                f"{BASE_DIR}/images/mouse_image.png")
-            time = 2
-        icon.icon = img
-
+        icon.icon = update_img()
         sleep(time)
+
+
+def update_img():
+    global time
+    battery = float(get_battery())
+    if battery > 75:
+        return Image.open(
+            f"{BASE_DIR}/images/battery_100.png")
+    elif battery > 50:
+        return Image.open(
+            f"{BASE_DIR}/images/battery_75.png")
+    elif battery > 25:
+        return Image.open(
+            f"{BASE_DIR}/images/battery_50.png")
+    elif battery > 0:
+        return Image.open(
+            f"{BASE_DIR}/images/battery_25.png")
+    else:
+        time = 1
+        return Image.open(
+            f"{BASE_DIR}/images/mouse_image.png")
 
 
 def on_clicked(icon, item):
@@ -106,6 +109,7 @@ def on_clicked(icon, item):
         icon.stop()
 
     if str(item) == "Check battery":
+        update_img()
         Notification(app_id="Razer Mouse",
                      title="Battery",
                      msg=f"{float(get_battery())}%",
