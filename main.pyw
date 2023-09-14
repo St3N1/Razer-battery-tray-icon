@@ -7,8 +7,10 @@ import pystray
 import threading
 from os import path
 
-BASE_DIR = path.join(path.dirname(__file__))
+# Check out https://github.com/hsutungyu/razer-mouse-battery-windows/tree/main for more info.
+# I made this for my own, you can change this with the help from the README that hsutungyu made
 
+BASE_DIR = path.join(path.dirname(__file__))
 WIRELESS_RECEIVER = 0x00b7
 WIRELESS_WIRED = 0x00b6
 TRAN_ID = b"\x1f"
@@ -105,13 +107,13 @@ def on_clicked(icon, item):
     if str(item) == "Check battery":
         Notification(app_id="Razer Mouse",
                             title="Battery",
-                            msg=float(get_battery()),
+                            msg=f"{float(get_battery())}%",
                             duration="short",
                             icon=f"{BASE_DIR}/images/mouse_image.png").show()
 
 
 if __name__ == "__main__":
-    global stop, battery
+    global stop
     stop = False
 
     image = Image.open(
