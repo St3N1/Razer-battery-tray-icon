@@ -78,16 +78,16 @@ def update_icon():
     while not stop:
         time = 300
         battery = float(get_battery())
-        if float(battery) > 75:
+        if battery > 75:
             img = Image.open(
                 f"{BASE_DIR}/images/battery_100.png")
-        elif float(battery) > 50:
+        elif battery > 50:
             img = Image.open(
                 f"{BASE_DIR}/images/battery_75.png")
-        elif float(battery) > 25:
+        elif battery > 25:
             img = Image.open(
                 f"{BASE_DIR}/images/battery_50.png")
-        elif float(battery) > 0:
+        elif battery > 0:
             img = Image.open(
                 f"{BASE_DIR}/images/battery_25.png")
         else:
@@ -104,12 +104,13 @@ def on_clicked(icon, item):
     if str(item) == "Stop":
         stop = True
         icon.stop()
+
     if str(item) == "Check battery":
         Notification(app_id="Razer Mouse",
-                            title="Battery",
-                            msg=f"{float(get_battery())}%",
-                            duration="short",
-                            icon=f"{BASE_DIR}/images/mouse_image.png").show()
+                     title="Battery",
+                     msg=f"{float(get_battery())}%",
+                     duration="short",
+                     icon=f"{BASE_DIR}/images/mouse_image.png").show()
 
 
 if __name__ == "__main__":
