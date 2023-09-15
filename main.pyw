@@ -79,7 +79,7 @@ def update_icon():
     global stop, time
     sleep(2)
     while not stop:
-        time = 5
+        time = 30
         icon.icon = update_img()
         sleep(time)
 
