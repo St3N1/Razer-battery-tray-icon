@@ -88,14 +88,14 @@ def update_img():
     global time, battery
     try:
         battery = float(get_battery())
-        if 100 >= battery > 75:
-            return Image.open(f"{BASE_DIR}/images/battery_100.png")
-        if 75 >= battery > 50:
-            return Image.open(f"{BASE_DIR}/images/battery_75.png")
-        if 50 >= battery > 25:
-            return Image.open(f"{BASE_DIR}/images/battery_50.png")
         if 25 >= battery > 0:
             return Image.open(f"{BASE_DIR}/images/battery_25.png")
+        if 50 >= battery > 25:
+            return Image.open(f"{BASE_DIR}/images/battery_50.png")
+        if 75 >= battery > 50:
+            return Image.open(f"{BASE_DIR}/images/battery_75.png")
+        if 100 >= battery > 75:
+            return Image.open(f"{BASE_DIR}/images/battery_100.png")
     except:
         pass
     time = 1
