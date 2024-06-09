@@ -2,27 +2,41 @@ from PIL import Image
 from time import sleep
 from usb import core, util
 from usb.backend import libusb1
-from winotify import Notification, audio
+from winotify import Notification
 import pystray
 import threading
 from os import path
 
-# Check out https://github.com/hsutungyu/razer-mouse-battery-windows/tree/main for more info.
-# I made this for my own, you can change this with the help from the README that hsutungyu made
-
 BASE_DIR = path.join(path.dirname(__file__))
-WIRELESS_RECEIVER = 0x00b7
-WIRELESS_WIRED = 0x00b6
+WIRELESS_RECEIVER = 0x00B7
+WIRELESS_WIRED = 0x00B6
 TRAN_ID = b"\x1f"
+LOOP_TIME = 30
+
+
+def main():
+    global stop, battery, prev_battery
+    prev_battery = -1
+    battery = get_battery()
+    stop = False
+
+    image = Image.open(f"{BASE_DIR}/images//mouse_image.png")
+
+    icon = pystray.Icon("Mouse Battery", image, f"Mouse Battery: {battery}%", menu=pystray.Menu(pystray.MenuItem("Check battery", on_clicked), pystray.MenuItem("Stop", on_clicked)))
+    threading.Thread(target=run_icon, args=(icon,)).start()
+
+    sleep(1)
+
+    while not stop:
+        icon.icon = update_img()
+        sleep(LOOP_TIME)
 
 
 def find_mouse():
     backend = libusb1.get_backend()
-    mouse = core.find(
-        idVendor=0x1532, idProduct=WIRELESS_RECEIVER, backend=backend)
+    mouse = core.find(idVendor=0x1532, idProduct=WIRELESS_RECEIVER, backend=backend)
     if not mouse:
-        mouse = core.find(
-            idVendor=0x1532, idProduct=WIRELESS_WIRED, backend=backend)
+        mouse = core.find(idVendor=0x1532, idProduct=WIRELESS_WIRED, backend=backend)
     return mouse
 
 
@@ -59,15 +73,11 @@ def get_battery():
 
     util.claim_interface(mouse, 0)
 
-    req = mouse.ctrl_transfer(
-        bmRequestType=0x21, bRequest=0x09, wValue=0x300, data_or_wLength=msg, wIndex=0x00)
+    mouse.ctrl_transfer(bmRequestType=0x21, bRequest=0x09, wValue=0x300, data_or_wLength=msg, wIndex=0x00)
 
     util.dispose_resources(mouse)
 
-    if wireless:
-        sleep(0.3305)
-    result = mouse.ctrl_transfer(
-        bmRequestType=0xa1, bRequest=0x01, wValue=0x300, data_or_wLength=90, wIndex=0x00)
+    result = mouse.ctrl_transfer(bmRequestType=0xA1, bRequest=0x01, wValue=0x300, data_or_wLength=90, wIndex=0x00)
 
     util.dispose_resources(mouse)
     util.release_interface(mouse, 0)
@@ -75,19 +85,19 @@ def get_battery():
     return f"{result[9] / 255 * 100:.2f}"
 
 
-def update_icon():
-    global stop, time
-    sleep(2)
-    while not stop:
-        time = 30
-        icon.icon = update_img()
-        sleep(time)
+def run_icon(icon):
+    icon.run()
 
 
 def update_img():
-    global time, battery
+    global time, battery, prev_battery
     try:
         battery = float(get_battery())
+
+        if prev_battery - battery > 5:
+            battery = prev_battery
+        prev_battery = battery
+
         if 25 >= battery > 0:
             return Image.open(f"{BASE_DIR}/images/battery_25.png")
         if 50 >= battery > 25:
@@ -97,9 +107,8 @@ def update_img():
         if 100 >= battery > 75:
             return Image.open(f"{BASE_DIR}/images/battery_100.png")
     except:
-        pass
-    time = 1
-    return Image.open(f"{BASE_DIR}/images/mouse_image.png")
+        time = 1
+        return Image.open(f"{BASE_DIR}/images/mouse_image.png")
 
 
 def on_clicked(icon, item):
@@ -110,25 +119,8 @@ def on_clicked(icon, item):
 
     if str(item) == "Check battery":
         update_img()
-        Notification(app_id="Razer Mouse",
-                     title="Battery",
-                     msg=f"{battery}%",
-                     duration="short",
-                     icon=f"{BASE_DIR}/images/mouse_image.png").show()
+        Notification(app_id="Deathadder V3 Pro", title="Battery", msg=f"{battery}%", duration="long", icon=f"{BASE_DIR}/images/mouse_image.png").show()
 
 
 if __name__ == "__main__":
-    global stop
-    stop = False
-
-    image = Image.open(
-        f"{BASE_DIR}/images//mouse_image.png")
-
-    icon = pystray.Icon("Mouse Battery", image, "Razer Mouse Battery", menu=pystray.Menu(
-        pystray.MenuItem("Check battery", on_clicked),
-        pystray.MenuItem("Stop", on_clicked)
-    ))
-
-    thread = threading.Thread(target=update_icon)
-    thread.start()
-    icon.run()
+    main()
