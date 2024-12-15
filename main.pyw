@@ -14,19 +14,9 @@ TRAN_ID = b"\x1f"
 LOOP_TIME = 30
 
 
-def main():
-    global stop, battery, prev_battery
-    prev_battery = -1
-    battery = get_battery()
-    stop = False
-
-    image = Image.open(f"{BASE_DIR}/images//mouse_image.png")
-
-    icon = pystray.Icon("Mouse Battery", image, f"Mouse Battery: {battery}%", menu=pystray.Menu(pystray.MenuItem("Check battery", on_clicked), pystray.MenuItem("Stop", on_clicked)))
-    threading.Thread(target=run_icon, args=(icon,)).start()
-
-    sleep(1)
-
+def update_icon():
+    global stop
+    sleep(2)
     while not stop:
         icon.icon = update_img()
         sleep(LOOP_TIME)
@@ -66,6 +56,7 @@ def battery_msg():
 
 
 def get_battery():
+    global wireless
     [mouse, wireless] = get_mouse()
     msg = battery_msg()
 
@@ -82,17 +73,16 @@ def get_battery():
     util.dispose_resources(mouse)
     util.release_interface(mouse, 0)
 
-    return f"{result[9] / 255 * 100:.2f}"
-
-
-def run_icon(icon):
-    icon.run()
+    return f"{result[9] / 255 * 100:.5f}"
 
 
 def update_img():
-    global time, battery, prev_battery
+    global prev_battery, wireless
     try:
         battery = float(get_battery())
+
+        if not wireless and battery < 100:
+            return Image.open(f"{BASE_DIR}/images/battery_charging.png")
 
         if prev_battery - battery > 5:
             battery = prev_battery
@@ -107,20 +97,34 @@ def update_img():
         if 100 >= battery > 75:
             return Image.open(f"{BASE_DIR}/images/battery_100.png")
     except:
-        time = 1
         return Image.open(f"{BASE_DIR}/images/mouse_image.png")
 
 
 def on_clicked(icon, item):
-    global stop, battery
+    global stop, wireless
     if str(item) == "Stop":
         stop = True
         icon.stop()
 
     if str(item) == "Check battery":
         update_img()
-        Notification(app_id="Deathadder V3 Pro", title="Battery", msg=f"{battery}%", duration="long", icon=f"{BASE_DIR}/images/mouse_image.png").show()
+        battery = float(get_battery())
+
+        title = "Battery"
+        if not wireless:
+            title = "Charging"
+
+        Notification(app_id="Deathadder V3 Pro  ", title=title, msg=f"{battery:.2f}%", duration="long", icon=f"{BASE_DIR}/images/mouse_image.png").show()
 
 
 if __name__ == "__main__":
-    main()
+    global stop, prev_battery
+    stop = False
+    prev_battery = -1
+
+    image = Image.open(f"{BASE_DIR}/images//mouse_image.png")
+    icon = pystray.Icon("Mouse Battery ", image, f"Mouse Battery ", menu=pystray.Menu(pystray.MenuItem("Check battery", on_clicked), pystray.MenuItem("Stop", on_clicked)))
+
+    thread = threading.Thread(target=update_icon)
+    thread.start()
+    icon.run()
